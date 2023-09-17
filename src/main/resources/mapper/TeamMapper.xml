@@ -24,4 +24,12 @@
         status,password,createTime,
         updateTime,isDelete
     </sql>
+    
+    <select id="associatedUsers" resultType="com.jackqiu.jackpao.model.domain.User">
+        select *
+        from user u
+                 left join user_team ut on u.id = ut.userId
+                 left join team t on t.id = ut.teamId
+        where t.id = #{id}
+    </select>
 </mapper>

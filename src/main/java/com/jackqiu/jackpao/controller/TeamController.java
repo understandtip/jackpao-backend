@@ -8,8 +8,11 @@ import com.jackqiu.jackpao.model.domain.Team;
 import com.jackqiu.jackpao.model.domain.User;
 import com.jackqiu.jackpao.model.request.TeamAddRequest;
 import com.jackqiu.jackpao.model.request.TeamQueryRequest;
+import com.jackqiu.jackpao.model.request.TeamUpdateRequest;
+import com.jackqiu.jackpao.model.vo.TeamVO;
 import com.jackqiu.jackpao.service.TeamService;
 import com.jackqiu.jackpao.service.UserService;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +51,21 @@ public class TeamController {
         return ResultUtil.success(teamId);
     }
 
+    @PostMapping("/update")
+    public BaseResponse<Boolean> updateTeam(@RequestBody TeamUpdateRequest teamUpdateRequest,HttpServletRequest request) {
+        //1.请求数据为空，抛出异常
+        if (teamUpdateRequest == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        User currentUser = userService.getCurrentUser(request);
+        boolean flag = teamService.updateTeam(teamUpdateRequest,currentUser);
+        //更新失败，抛出异常
+        if (!flag) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"更新失败");
+        }
+        return ResultUtil.success(flag);
+    }
+
     /**
      * 查询队伍列表
      *
@@ -55,12 +73,15 @@ public class TeamController {
      * @return
      */
     @GetMapping("/list")
-    public BaseResponse<List<Team>> getTeamList(TeamQueryRequest teamQueryRequest, HttpServletRequest request) {
+    public BaseResponse<List<TeamVO>> getTeamList(TeamQueryRequest teamQueryRequest, HttpServletRequest request) {
         if (teamQueryRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         User currentUser = userService.getCurrentUser(request);
-        List<Team> list = teamService.getTeamList(teamQueryRequest, currentUser);
+        if (userService.isAdmin(currentUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        List<TeamVO> list = teamService.getTeamList(teamQueryRequest, currentUser);
         return ResultUtil.success(list);
     }
 }

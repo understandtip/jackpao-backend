@@ -2,6 +2,11 @@ package com.jackqiu.jackpao.mapper;
 
 import com.jackqiu.jackpao.model.domain.Team;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jackqiu.jackpao.model.domain.User;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
 * @author jackqiu
@@ -11,6 +16,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface TeamMapper extends BaseMapper<Team> {
 
+    List<User> associatedUsers(@Param("id") Long id);
 }
 
 

@@ -1,9 +1,7 @@
 package com.jackqiu.jackpao.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.date.DateTime;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jackqiu.jackpao.common.ErrorCode;
 import com.jackqiu.jackpao.exception.BusinessException;
@@ -13,21 +11,21 @@ import com.jackqiu.jackpao.model.domain.UserTeam;
 import com.jackqiu.jackpao.model.enums.TeamStatusEnum;
 import com.jackqiu.jackpao.model.request.TeamAddRequest;
 import com.jackqiu.jackpao.model.request.TeamQueryRequest;
+import com.jackqiu.jackpao.model.request.TeamUpdateRequest;
+import com.jackqiu.jackpao.model.vo.TeamVO;
 import com.jackqiu.jackpao.service.TeamService;
 import com.jackqiu.jackpao.model.domain.Team;
 import com.jackqiu.jackpao.service.UserService;
 import com.jackqiu.jackpao.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.*;
-
-import static cn.hutool.poi.excel.sax.AttributeName.s;
-import static cn.hutool.poi.excel.sax.AttributeName.t;
+import java.util.stream.Collectors;
 
 /**
  * @author jackqiu
@@ -44,6 +42,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private TeamMapper teamMapper;
 
     /**
      * 添加队伍
@@ -129,7 +130,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
      * @return
      */
     @Override
-    public List<Team> getTeamList(TeamQueryRequest teamQueryRequest, User currentUser) {
+    public List<TeamVO> getTeamList(TeamQueryRequest teamQueryRequest, User currentUser) {
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
         //1.拼接查询条件,如果对应参数不为空，则拼接到查询条件中
         String name = teamQueryRequest.getName();
@@ -153,7 +154,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             queryWrapper.eq("userId",userId);
         }
         //2.查询未过期的队伍
-        queryWrapper.le("expireTime", new Date());
+        queryWrapper.gt("expireTime", new Date());
         //3.   状态只能为公开或者加密
         //3.1  管理员才可以查看队伍状态为私有的队伍
         Integer status = teamQueryRequest.getStatus();
@@ -170,11 +171,75 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (StringUtils.isNotBlank(searchText)) {
             queryWrapper.and(param -> param.like("name",searchText).or().like("description",searchText));
         }
-        //分页查询
-        Page<Team> userPage = new Page<>(teamQueryRequest.getPageNum(), teamQueryRequest.getPageSize());
-        Page<Team> page = this.page(userPage, queryWrapper);
+        //查询符合条件的数据
+        List<Team> list = this.list(queryWrapper);
+        //每一个Team对象拷贝到TeamVO中
+        List<TeamVO> teamVOList = list.stream().map(team -> {
+            TeamVO teamVO = new TeamVO();
+            BeanUtil.copyProperties(team, teamVO);
+            return teamVO;
+        }).collect(Collectors.toList());
+        // 关联队伍的已加入队伍的用户
+        return teamVOList.stream()
+                .map(teamVO -> {
+                    Long teamVOId = teamVO.getId();
+                    teamVO.setUserList(teamMapper.associatedUsers(teamVOId).stream()
+                            .map(user -> userService.getSafetyUser(user))
+                            .collect(Collectors.toList()) );
+                    return teamVO;
+                })
+                .collect(Collectors.toList());
+    }
 
-        return null;
+    /**
+     * 更新队伍信息
+     * @param teamUpdateRequest
+     * @return
+     */
+    @Override
+    public boolean updateTeam(TeamUpdateRequest teamUpdateRequest,User currentUser) {
+        //1.请求数据为空，抛出异常
+        if (teamUpdateRequest == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        Long id = teamUpdateRequest.getId();
+        //1.1  传递的id应该大于0  并且不为空
+        if (id == null || id <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR,"id应该不为空并且大于0");
+        }
+        Team team = this.getById(id);
+        //2.旧队伍信息不存在，抛出异常
+        if (team == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR,"队伍不存在");
+        }
+        //3.管理员或者队伍的创建者才能更新信息
+        if (team.getUserId() != currentUser.getId() && !userService.isAdmin(currentUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        //4.如果改为加密状态，必须传递密码
+        TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(teamUpdateRequest.getStatus());
+        TeamStatusEnum oldStatusEnum = TeamStatusEnum.getEnumByValue(team.getStatus());
+        //本来是加密房间，更新为加密，可以不用传递密码
+        //本来不是加密房间，更新为加密，必须要传递密码
+        if (TeamStatusEnum.SECRET.equals(statusEnum) && !TeamStatusEnum.SECRET.equals(oldStatusEnum) ){
+            if (StringUtils.isBlank(teamUpdateRequest.getPassword())) {
+                throw new BusinessException(ErrorCode.PARAM_ERROR,"加密房间必须传递密码");
+            }
+        }
+        Team newTeam = new Team();
+        BeanUtil.copyProperties(teamUpdateRequest,newTeam);
+        //如果String类型的数据为 "" 也不需要更新
+        if (teamUpdateRequest.getName().isEmpty()) {
+            newTeam.setName(null);
+        }
+        if (teamUpdateRequest.getDescription().isEmpty()) {
+            newTeam.setDescription(null);
+        }
+        if (teamUpdateRequest.getPassword().isEmpty()) {
+            newTeam.setPassword(null);
+        }
+        //5.更新数据
+        return this.updateById(newTeam);
     }
 }
 

@@ -21,6 +21,8 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
   session:
     store-type: redis
+    # 30 天过期
+    timeout: 2592000
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER

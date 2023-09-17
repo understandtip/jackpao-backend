@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.jackqiu.jackpao.model.domain.User;
 import com.jackqiu.jackpao.model.request.TeamAddRequest;
 import com.jackqiu.jackpao.model.request.TeamQueryRequest;
+import com.jackqiu.jackpao.model.request.TeamUpdateRequest;
+import com.jackqiu.jackpao.model.vo.TeamVO;
 
 import java.util.List;
 
@@ -29,5 +31,13 @@ public interface TeamService extends IService<Team> {
      * @param currentUser
      * @return
      */
-    List<Team> getTeamList(TeamQueryRequest teamQueryRequest, User currentUser);
+    List<TeamVO> getTeamList(TeamQueryRequest teamQueryRequest, User currentUser);
+
+    /**
+     * 更新队伍信息
+     * @param teamUpdateRequest
+     * @param currentUser
+     * @return
+     */
+    boolean updateTeam(TeamUpdateRequest teamUpdateRequest,User currentUser);
 }
