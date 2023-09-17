@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.jackqiu.jackpao.model.domain.Team;
+import com.jackqiu.jackpao.model.domain.User;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,7 +13,8 @@ import java.util.Date;
 
 /**
  * 队伍
- * @TableName team
+ *
+ * @author jackqiu
  */
 @Data
 public class TeamUpdateRequest implements Serializable {
@@ -48,4 +51,26 @@ public class TeamUpdateRequest implements Serializable {
      */
     private String password;
 
+    public Boolean equals(Team team) {
+        //获取需要和TeamUpdateRequest对比的属性
+        Long id = team.getId();
+        String name = team.getName();
+        String description = team.getDescription();
+        Date expireTime = team.getExpireTime();
+        Integer status = team.getStatus();
+        String password = team.getPassword();
+        //获取TeamUpdateRequest的所有属性
+        Long thisId = this.getId();
+        String thisName = this.getName();
+        String thisDescription = this.getDescription();
+        Date thisExpireTime = this.getExpireTime();
+        Integer thisStatus = this.getStatus();
+        String thisPassword = this.getPassword();
+        return id.equals(thisId)
+                && (thisName == null ? true : thisName.equals(name) )
+                && (thisDescription == null ? true : thisDescription.equals(description) )
+                && (thisExpireTime == null ? true : thisExpireTime.equals(expireTime) )
+                && (thisStatus == null ? true : thisStatus.equals(status) )
+                && (thisPassword == null ? true : thisPassword.equals(password) );
+    }
 }

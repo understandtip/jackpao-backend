@@ -78,9 +78,9 @@ public class TeamController {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         User currentUser = userService.getCurrentUser(request);
-        if (userService.isAdmin(currentUser)) {
+        /*if (userService.isAdmin(currentUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
-        }
+        }*/
         List<TeamVO> list = teamService.getTeamList(teamQueryRequest, currentUser);
         return ResultUtil.success(list);
     }

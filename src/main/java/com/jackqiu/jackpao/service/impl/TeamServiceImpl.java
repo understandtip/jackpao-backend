@@ -216,6 +216,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (team.getUserId() != currentUser.getId() && !userService.isAdmin(currentUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
+        //如果传递的新值和原来的一样，就不更新了
+        if (teamUpdateRequest.equals(team)) {
+            return true;
+        }
         //4.如果改为加密状态，必须传递密码
         TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(teamUpdateRequest.getStatus());
         TeamStatusEnum oldStatusEnum = TeamStatusEnum.getEnumByValue(team.getStatus());
@@ -229,13 +233,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         Team newTeam = new Team();
         BeanUtil.copyProperties(teamUpdateRequest,newTeam);
         //如果String类型的数据为 "" 也不需要更新
-        if (teamUpdateRequest.getName().isEmpty()) {
+        if ("".equals(teamUpdateRequest.getName())) {
             newTeam.setName(null);
         }
-        if (teamUpdateRequest.getDescription().isEmpty()) {
+        if ("".equals(teamUpdateRequest.getDescription())) {
             newTeam.setDescription(null);
         }
-        if (teamUpdateRequest.getPassword().isEmpty()) {
+        if ("".equals(teamUpdateRequest.getPassword())) {
             newTeam.setPassword(null);
         }
         //5.更新数据
