@@ -7,6 +7,7 @@ import com.jackqiu.jackpao.exception.BusinessException;
 import com.jackqiu.jackpao.model.domain.Team;
 import com.jackqiu.jackpao.model.domain.User;
 import com.jackqiu.jackpao.model.request.TeamAddRequest;
+import com.jackqiu.jackpao.model.request.TeamJoinRequest;
 import com.jackqiu.jackpao.model.request.TeamQueryRequest;
 import com.jackqiu.jackpao.model.request.TeamUpdateRequest;
 import com.jackqiu.jackpao.model.vo.TeamVO;
@@ -83,5 +84,21 @@ public class TeamController {
         }*/
         List<TeamVO> list = teamService.getTeamList(teamQueryRequest, currentUser);
         return ResultUtil.success(list);
+    }
+
+    /**
+     * 加入队伍
+     * @param teamJoinRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/join")
+    public BaseResponse<Boolean> joinTeam(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
+        if (teamJoinRequest == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
+        }
+        User currentUser = userService.getCurrentUser(request);
+        boolean flag = teamService.joinTeam(teamJoinRequest, currentUser);
+        return ResultUtil.success(flag);
     }
 }

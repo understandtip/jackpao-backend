@@ -60,4 +60,8 @@ public class TeamVO implements Serializable {
      */
     private List<User> userList;
 
+    /**
+     * 创建时间
+     */
+    private Date createTime;
 }
