@@ -1,12 +1,10 @@
 package com.jackqiu.jackpao.service;
 
+import com.jackqiu.jackpao.common.DeleteRequest;
 import com.jackqiu.jackpao.model.domain.Team;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jackqiu.jackpao.model.domain.User;
-import com.jackqiu.jackpao.model.request.TeamAddRequest;
-import com.jackqiu.jackpao.model.request.TeamJoinRequest;
-import com.jackqiu.jackpao.model.request.TeamQueryRequest;
-import com.jackqiu.jackpao.model.request.TeamUpdateRequest;
+import com.jackqiu.jackpao.model.request.*;
 import com.jackqiu.jackpao.model.vo.TeamVO;
 
 import java.util.List;
@@ -49,4 +47,20 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     boolean joinTeam(TeamJoinRequest teamJoinRequest, User currentUser);
+
+    /**
+     * 退出队伍
+     * @param teamQuitRequest
+     * @param currentUser
+     * @return
+     */
+    boolean quitTeam(TeamQuitRequest teamQuitRequest, User currentUser);
+
+    /**
+     * 解散队伍
+     * @param deleteRequest
+     * @param currentUser
+     * @return
+     */
+    boolean deleteTeam(DeleteRequest deleteRequest, User currentUser);
 }
