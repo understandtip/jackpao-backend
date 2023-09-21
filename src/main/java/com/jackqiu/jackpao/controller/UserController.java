@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.jackqiu.jackpao.common.KeyNameEnum.SYSTEM_NAME;
 import static com.jackqiu.jackpao.common.KeyNameEnum.USER_MODEL;
@@ -202,6 +203,14 @@ public class UserController {
         //2.如果缓存中不存在，那么就查询数据库
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         Page<User> userPage = userService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        //排除自己
+        List<User> realUserList = userPage.getRecords().stream().filter(user -> {
+            if (user.getId().equals(currentUser.getId())) {
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        userPage.setRecords(realUserList);
         //3.查询出来之后，将数据保存在缓存中，下次查询时就可以从缓存中获取
         try {
             ops.set(redisKey, userPage, 30, TimeUnit.SECONDS);

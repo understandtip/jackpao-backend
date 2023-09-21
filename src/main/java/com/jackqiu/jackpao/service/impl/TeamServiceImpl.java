@@ -170,24 +170,40 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (StringUtils.isNotBlank(searchText)) {
             queryWrapper.and(param -> param.like("name", searchText).or().like("description", searchText));
         }
-        //查询符合条件的数据
+        //5.关联已加入队伍的用户
+        //5.1查询符合条件的List<Team>数据
         List<Team> list = this.list(queryWrapper);
-        //每一个Team对象拷贝到TeamVO中
+        //5.2每一个Team对象拷贝到TeamVO中
         List<TeamVO> teamVOList = list.stream().map(team -> {
             TeamVO teamVO = new TeamVO();
             BeanUtil.copyProperties(team, teamVO);
             return teamVO;
         }).collect(Collectors.toList());
-        // 关联队伍的已加入队伍的用户
-        return teamVOList.stream()
+        //5.3调用对应方法获取对应队伍的用户列表
+        List<TeamVO> teamVOS = teamVOList.stream()
                 .map(teamVO -> {
                     Long teamVOId = teamVO.getId();
                     teamVO.setUserList(teamMapper.associatedUsers(teamVOId).stream()
+                            //5.4同时将用户列表脱敏
                             .map(user -> userService.getSafetyUser(user))
-                            .collect(Collectors.toList()));
+                            .collect(Collectors.toSet()).stream().collect(Collectors.toList()));
+                    //5.5设置加入队伍的用户的数量
+                    teamVO.setHasJoinNum(teamVO.getUserList().size());
                     return teamVO;
                 })
                 .collect(Collectors.toList());
+        //5.6设置当前用户是否加入该队伍的标记
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        userTeamQueryWrapper.eq("userId",currentUser.getId());
+        //5.6.1 查询出用户加入的队伍id集合（使用Set集合去重）
+        Set<Long> userTeamSet = userTeamService.list(userTeamQueryWrapper).stream()
+                .map(userTeam -> userTeam.getTeamId()).collect(Collectors.toSet());
+        //5.6.2 判断每个队伍 id 是否在集合列表中
+        teamVOS.forEach(teamVO -> {
+            boolean hasJoin = userTeamSet.contains(teamVO.getId());
+            teamVO.setHasJoin(hasJoin);
+        });
+        return teamVOS;
     }
 
     /**

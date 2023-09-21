@@ -64,4 +64,14 @@ public class TeamVO implements Serializable {
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 已加入的用户数
+     */
+    private Integer hasJoinNum;
+
+    /**
+     * 是否已加入队伍
+     */
+    private boolean hasJoin = false;
 }
