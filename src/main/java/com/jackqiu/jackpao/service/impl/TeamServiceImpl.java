@@ -17,6 +17,7 @@ import com.jackqiu.jackpao.model.domain.Team;
 import com.jackqiu.jackpao.service.UserService;
 import com.jackqiu.jackpao.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,6 +141,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (StringUtils.isNotBlank(description)) {
             queryWrapper.like("description", description);
         }
+        List<Long> idList = teamQueryRequest.getIdList();
+        if (CollectionUtils.isNotEmpty(idList)) {
+            queryWrapper.in("id",idList);
+        }
         Integer maxNum = teamQueryRequest.getMaxNum();
         if (maxNum != null) {
             queryWrapper.eq("maxNum", maxNum);
@@ -156,14 +161,18 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         queryWrapper.gt("expireTime", new Date());
         //3.   状态只能为公开或者加密
         //3.1  管理员才可以查看队伍状态为私有的队伍
-        Integer status = teamQueryRequest.getStatus();
-        status = Optional.ofNullable(status).orElse(0);
-        TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
-        if (statusEnum != null) {
-            if (statusEnum.equals(TeamStatusEnum.PRIVATE) && !userService.isAdmin(currentUser)) {
-                throw new BusinessException(ErrorCode.NO_AUTH);
+        //如果用户查询我创建的队伍  或者  查询我加入的队伍时，都放行
+        boolean flag = (userId != null && userId.equals(currentUser.getId())) || CollectionUtils.isNotEmpty(idList);
+        if (!flag) {
+            Integer status = teamQueryRequest.getStatus();
+            status = Optional.ofNullable(status).orElse(0);
+            TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
+            if (statusEnum != null) {
+                if (statusEnum.equals(TeamStatusEnum.PRIVATE) && !userService.isAdmin(currentUser)) {
+                    throw new BusinessException(ErrorCode.NO_AUTH);
+                }
+                queryWrapper.eq("status", status);
             }
-            queryWrapper.eq("status", status);
         }
         //4.可以通过某个关键词对队伍名和描述进行查询
         String searchText = teamQueryRequest.getSearchText();

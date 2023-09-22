@@ -174,11 +174,12 @@ public class UserController {
      * @return
      */
     @GetMapping("/search/tags")
-    public BaseResponse<List<User>> searchUserByTags(@RequestParam(required = false) List<String> tagNameList) {
+    public BaseResponse<List<User>> searchUserByTags(@RequestParam(required = false) List<String> tagNameList, HttpServletRequest request) {
         if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "请求参数不能为空");
         }
-        List<User> userList = userService.searchUserByTags(tagNameList);
+        User currentUser = userService.getCurrentUser(request);
+        List<User> userList = userService.searchUserByTags(tagNameList,currentUser);
         return ResultUtil.success(userList);
     }
 

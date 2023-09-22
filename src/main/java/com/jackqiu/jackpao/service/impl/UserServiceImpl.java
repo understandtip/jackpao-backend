@@ -233,16 +233,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public List<User> searchUserByTags(List<String> tagList) {
+    public List<User> searchUserByTags(List<String> tagList, User currentUser) {
         if (CollectionUtils.isEmpty(tagList)) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "请求参数不能为空");
         }
         //1.查询出所有的用户
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("id", "username","userAccount","avatarUrl",
+                "gender","phone","email","userStatus","createTime","userRole","planetCode","tags");
+        queryWrapper.isNotNull("tags");
+        queryWrapper.ne("tags","[]");
         List<User> userList = userMapper.selectList(queryWrapper);
         Gson gson = new Gson();
         //2.匹配符合标签的用户
         return userList.stream().filter(user -> {
+            //排除自己
+            if (user.getId().equals(currentUser.getId())) {
+                return false;
+            }
             String tagsStr = user.getTags();
             Set<String> tempTagNameSet = gson.fromJson(tagsStr, new TypeToken<Set<String>>() {
             }.getType());

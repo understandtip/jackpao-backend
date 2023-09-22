@@ -89,7 +89,7 @@ public interface UserService extends IService<User> {
      * @param tagList
      * @return
      */
-    List<User> searchUserByTags(List<String> tagList);
+    List<User> searchUserByTags(List<String> tagList, User currentUser);
 
     /**
      * 匹配最相似的用户
