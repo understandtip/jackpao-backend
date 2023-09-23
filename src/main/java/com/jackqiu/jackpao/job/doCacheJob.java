@@ -2,13 +2,11 @@ package com.jackqiu.jackpao.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jackqiu.jackpao.common.ResultUtil;
 import com.jackqiu.jackpao.model.domain.User;
 import com.jackqiu.jackpao.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.jackqiu.jackpao.common.KeyNameEnum.SYSTEM_NAME;
 import static com.jackqiu.jackpao.common.KeyNameEnum.USER_MODEL;
+import static com.jackqiu.jackpao.constant.LockConstant.precacheJobLock;
 
 /**
  * 定时执行缓存的类
@@ -46,7 +45,7 @@ public class doCacheJob {
     @Scheduled(cron = "0 09 21 * * *")
     public void doJob() {
         //获取锁对象
-        RLock lock = redissonClient.getLock(SYSTEM_NAME + ":precachejob:docache:lock");
+        RLock lock = redissonClient.getLock(SYSTEM_NAME + precacheJobLock);
         try {
             //只有一个服务器能够加锁
             if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
