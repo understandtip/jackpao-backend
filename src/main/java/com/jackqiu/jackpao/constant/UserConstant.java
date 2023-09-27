@@ -24,4 +24,8 @@ public interface UserConstant {
      */
     int ADMIN_ROLE = 1;
 
+    /**
+     * 默认权限
+     */
+    int BAN = 2;
 }

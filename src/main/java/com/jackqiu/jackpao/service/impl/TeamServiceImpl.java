@@ -226,6 +226,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             boolean hasJoin = userTeamSet.contains(teamVO.getId());
             teamVO.setHasJoin(hasJoin);
         });
+        teamVOS = teamVOS.stream().sorted(new Comparator<TeamVO>() {
+            @Override
+            public int compare(TeamVO o1, TeamVO o2) {
+                return (o2.getHasJoinNum() * 100 / o2.getMaxNum()) - (o1.getHasJoinNum() * 100 / o1.getMaxNum());
+            }
+        }).collect(Collectors.toList());
         return teamVOS;
     }
 

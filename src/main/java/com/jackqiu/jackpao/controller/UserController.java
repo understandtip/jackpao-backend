@@ -3,11 +3,14 @@ package com.jackqiu.jackpao.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ser.Serializers;
+import com.jackqiu.jackpao.annotation.AuthCheck;
 import com.jackqiu.jackpao.common.BaseResponse;
 import com.jackqiu.jackpao.common.ErrorCode;
 import com.jackqiu.jackpao.common.ResultUtil;
+import com.jackqiu.jackpao.constant.UserConstant;
 import com.jackqiu.jackpao.exception.BusinessException;
 import com.jackqiu.jackpao.model.domain.User;
+import com.jackqiu.jackpao.model.enums.UserRoleEnum;
 import com.jackqiu.jackpao.model.request.UserLoginRequest;
 import com.jackqiu.jackpao.model.request.UserRegistryRequest;
 import com.jackqiu.jackpao.service.UserService;
@@ -189,6 +192,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/recommend")
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNum, HttpServletRequest request) {
         User currentUser = userService.getCurrentUser(request);
         if (pageSize <= 0 || pageNum <= 0 || pageSize > 100) {
@@ -214,7 +218,7 @@ public class UserController {
         userPage.setRecords(realUserList);
         //3.查询出来之后，将数据保存在缓存中，下次查询时就可以从缓存中获取
         try {
-            ops.set(redisKey, userPage, 30, TimeUnit.SECONDS);
+            ops.set(redisKey, userPage, 10, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.error("redis set key error", e);
         }
@@ -245,7 +249,7 @@ public class UserController {
         List<User> userList = userService.matchUsers(num, currentUser);
         //3.查询出来之后，将数据保存在缓存中，下次查询时就可以从缓存中获取
         try {
-            ops.set(redisKey, userList, 30, TimeUnit.SECONDS);
+            ops.set(redisKey, userList, 10, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.error("redis set key error", e);
         }
