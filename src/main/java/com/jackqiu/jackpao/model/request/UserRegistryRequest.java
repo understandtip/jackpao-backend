@@ -28,5 +28,5 @@ public class UserRegistryRequest implements Serializable {
     /**
      * 星球编号
      */
-    private String planetCode;
+//    private String planetCode;
 }

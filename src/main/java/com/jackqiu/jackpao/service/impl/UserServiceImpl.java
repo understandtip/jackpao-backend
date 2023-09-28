@@ -50,9 +50,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public Long registry(String userAccount, String userPassword, String checkPassword, String planetCode) {
+    public Long registry(String userAccount, String userPassword, String checkPassword) {
         //1.校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "参数不能为空");
         }
         if (userAccount.length() < 4) {
@@ -64,6 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "两次输入的密码必须一致");
         }
+        String planetCode = new Random().nextInt(1000) + "";
         if (planetCode.length() > 5) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "星球编号过长");
         }

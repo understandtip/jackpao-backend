@@ -20,10 +20,9 @@ public interface UserService extends IService<User> {
      * @param userAccount
      * @param userPassword
      * @param checkPassword
-     * @param planetCode
      * @return
      */
-    Long registry(String userAccount, String userPassword, String checkPassword, String planetCode);
+    Long registry(String userAccount, String userPassword, String checkPassword);
 
     /**
      * 用户登录

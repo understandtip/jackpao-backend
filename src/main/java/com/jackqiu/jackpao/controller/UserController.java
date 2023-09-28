@@ -53,7 +53,7 @@ public class UserController {
      * @param userRegistryRequest json数据格式
      * @return
      */
-    @PostMapping("/register")
+    @PostMapping("/registry")
     public BaseResponse<Long> registry(@RequestBody UserRegistryRequest userRegistryRequest) {
         if (userRegistryRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
@@ -61,11 +61,10 @@ public class UserController {
         String userAccount = userRegistryRequest.getUserAccount();
         String userPassword = userRegistryRequest.getUserPassword();
         String checkPassword = userRegistryRequest.getCheckPassword();
-        String planetCode = userRegistryRequest.getPlanetCode();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "参数不能为空");
         }
-        Long id = userService.registry(userAccount, userPassword, checkPassword, planetCode);
+        Long id = userService.registry(userAccount, userPassword, checkPassword);
         return ResultUtil.success(id);
     }
 
